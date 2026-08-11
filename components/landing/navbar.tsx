@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Menu, X, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -60,12 +61,12 @@ export default function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <button onClick={() => handleNav('#pricing')} className="text-sm text-[#6B7280] hover:text-[#111827] transition-colors px-4 py-2">
+          <Link href="/login" className="text-sm text-[#6B7280] hover:text-[#111827] transition-colors px-4 py-2">
             Login
-          </button>
-          <button onClick={() => handleNav('#pricing')} className="text-sm text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] px-5 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium">
+          </Link>
+          <Link href="/register" className="text-sm text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] px-5 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium">
             Get Started
-          </button>
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -99,10 +100,10 @@ export default function Navbar() {
                 </button>
               ))}
               <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
-                <button onClick={() => handleNav('#pricing')} className="text-sm text-[#6B7280] hover:text-[#111827] py-2">Login</button>
-                <button onClick={() => handleNav('#pricing')} className="text-sm text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] px-5 py-2.5 rounded-lg font-medium">
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="text-sm text-[#6B7280] hover:text-[#111827] py-2">Login</Link>
+                <Link href="/register" onClick={() => setMobileOpen(false)} className="text-sm text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] px-5 py-2.5 rounded-lg font-medium text-center">
                   Get Started
-                </button>
+                </Link>
               </div>
             </div>
           </motion.div>

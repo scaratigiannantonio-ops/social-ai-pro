@@ -1,6 +1,7 @@
 'use client'
 
 import { FadeIn } from '@/components/ui/animate'
+import Link from 'next/link'
 import { Check, ArrowRight } from 'lucide-react'
 
 const features = [
@@ -49,10 +50,10 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              <button onClick={() => window.open('#', '_self')} className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+              <Link href="/register" className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
                 Start for €29/month
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
 
               <p className="text-center text-xs text-[#6B7280] mt-4">Cancel anytime.</p>
             </div>
