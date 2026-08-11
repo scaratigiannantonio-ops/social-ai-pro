@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "social-ai-pro",
+  "main": ".open-next/worker.js",
+
+  // Must be 2024-09-23 or later for the OpenNext Cloudflare adapter.
+  "compatibility_date": "2026-01-15",
+
+  // nodejs_compat is REQUIRED by @opennextjs/cloudflare.
+  // global_fetch_strictly_public makes fetch() to your own domain behave like a
+  // real public request (recommended by OpenNext).
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  // Static assets (/_next/static, /public) are served directly from Cloudflare's
+  // edge instead of going through the Worker.
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+
+  // ---------------------------------------------------------------------------
+  // OPTIONAL (not needed for the current static landing page).
+  // Uncomment when you later add ISR / cached fetches, and create the KV
+  // namespace first with:  npx wrangler kv namespace create NEXT_INC_CACHE_KV
+  //
+  // "kv_namespaces": [
+  //   { "binding": "NEXT_INC_CACHE_KV", "id": "<your-kv-namespace-id>" }
+  // ]
+  // ---------------------------------------------------------------------------
+}

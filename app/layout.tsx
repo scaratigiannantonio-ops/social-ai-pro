@@ -10,7 +10,11 @@ export const dynamic = 'force-dynamic'
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXTAUTH_URL ||
+      'http://localhost:3000'
+  ),
   title: 'Social AI Pro — Your AI-Powered Social Media Team',
   description:
     'Social AI Pro researches your audience, discovers what people are asking, creates your content strategy and helps you publish content that actually matters.',
