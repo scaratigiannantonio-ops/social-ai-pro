@@ -1,15 +1,5 @@
 /* =========================================================================
  * AUTH CLIENT
- * =========================================================================
- * Thin frontend client for the future authentication backend.
- *
- * There is NO authentication implemented here: no session, no token, nothing
- * written to localStorage. The client simply forwards the form payload to the
- * API described by NEXT_PUBLIC_API_BASE_URL.
- *
- * While that variable is not configured, the calls below resolve to
- * { status: 'not-configured' } so the UI can show an honest message instead of
- * pretending the user has been registered or logged in.
  * ========================================================================= */
 
 export interface RegisterPayload {
@@ -24,44 +14,96 @@ export interface LoginPayload {
   remember: boolean
 }
 
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  credits?: number
+  plan?: string
+}
+
 export type AuthResult =
-  | { status: 'success' }
+  | {
+      status: 'success'
+      access_token?: string
+      user?: AuthUser
+    }
   | { status: 'not-configured' }
   | { status: 'error'; message: string }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? ''
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? ''
 
 export const isBackendConfigured = () => API_BASE.length > 0
 
-async function post(path: string, body: unknown): Promise<AuthResult> {
-  if (!isBackendConfigured()) return { status: 'not-configured' }
+const TOKEN_KEY = 'social_ai_pro_access_token'
+
+export function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+export function saveAccessToken(token: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(TOKEN_KEY, token)
+}
+
+export function removeAccessToken(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+async function post(
+  path: string,
+  body: unknown,
+): Promise<AuthResult> {
+  if (!isBackendConfigured()) {
+    return { status: 'not-configured' }
+  }
 
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(body),
     })
 
+    const data = await res.json().catch(() => null)
+
     if (!res.ok) {
-      const data = await res.json().catch(() => null)
       return {
         status: 'error',
         message:
-          (data as { message?: string } | null)?.message ??
+          data?.detail ??
+          data?.message ??
           `Richiesta non riuscita (${res.status}).`,
       }
     }
 
-    return { status: 'success' }
+    if (data?.access_token) {
+      saveAccessToken(data.access_token)
+    }
+
+    return {
+      status: 'success',
+      access_token: data?.access_token,
+      user: data?.user,
+    }
   } catch {
     return {
       status: 'error',
-      message: 'Impossibile contattare il server. Riprova tra qualche istante.',
+      message:
+        'Impossibile contattare il server. Riprova tra qualche istante.',
     }
   }
 }
 
-export const registerUser = (payload: RegisterPayload) => post('/auth/register', payload)
-export const loginUser = (payload: LoginPayload) => post('/auth/login', payload)
+export const registerUser = (
+  payload: RegisterPayload,
+) => post('/auth/register', payload)
+
+export const loginUser = (
+  payload: LoginPayload,
+) => post('/auth/login', payload)
