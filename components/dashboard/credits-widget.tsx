@@ -1,22 +1,56 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Wallet, Sparkles } from 'lucide-react'
-import { MOCK_CREDITS } from '@/lib/mock-data'
+import { getCreditBalance } from '@/lib/auth-client'
 
 interface CreditsWidgetProps {
   /** Compact variant used on the Overview page. */
   compact?: boolean
 }
 
-/**
- * Credits UI. The balance comes from MOCK_CREDITS (UI-only placeholder) and is
- * never written anywhere: nothing here is persisted and no payment flow exists.
- */
+interface CreditBalance {
+  user_id: number
+  credits: number
+  plan: string
+}
+
 export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
   const [notice, setNotice] = useState(false)
-  const { balance, monthlyAllowance, recentUsage } = MOCK_CREDITS
-  const pct = Math.max(0, Math.min(100, Math.round((balance / monthlyAllowance) * 100)))
+  const [creditData, setCreditData] = useState<CreditBalance | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadCredits() {
+      try {
+        const data = await getCreditBalance()
+
+        if (data) {
+          setCreditData(data)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCredits()
+  }, [])
+
+  const balance = creditData?.credits ?? 0
+
+  /*
+   * Il limite mensile rimane temporaneamente quello della UI.
+   * In seguito lo prenderemo dal piano reale dell'utente.
+   */
+  const monthlyAllowance = 6000
+
+  const pct = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round((balance / monthlyAllowance) * 100),
+    ),
+  )
 
   return (
     <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
@@ -25,16 +59,29 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EEF2FF]">
             <Wallet className="h-5 w-5 text-[#6366F1]" />
           </div>
+
           <div>
-            <h3 className="text-base font-semibold text-[#111827]">AI Credits</h3>
-            <p className="text-sm text-[#6B7280]">Saldo del ciclo corrente</p>
+            <h3 className="text-base font-semibold text-[#111827]">
+              AI Credits
+            </h3>
+
+            <p className="text-sm text-[#6B7280]">
+              Saldo del ciclo corrente
+            </p>
           </div>
         </div>
       </div>
 
       <div className="mt-6 flex items-baseline gap-2">
-        <span className="text-4xl font-bold text-[#111827]">{balance.toLocaleString('it-IT')}</span>
-        <span className="text-sm text-[#6B7280]">/ {monthlyAllowance.toLocaleString('it-IT')} crediti</span>
+        <span className="text-4xl font-bold text-[#111827]">
+          {loading
+            ? '...'
+            : balance.toLocaleString('it-IT')}
+        </span>
+
+        <span className="text-sm text-[#6B7280]">
+          / {monthlyAllowance.toLocaleString('it-IT')} crediti
+        </span>
       </div>
 
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
@@ -43,22 +90,20 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="mt-2 text-xs text-[#6B7280]">{pct}% del pacchetto mensile ancora disponibile</p>
+
+      <p className="mt-2 text-xs text-[#6B7280]">
+        {pct}% del pacchetto mensile ancora disponibile
+      </p>
 
       {!compact && (
         <div className="mt-6">
-          <h4 className="text-sm font-semibold text-[#111827]">Consumi recenti</h4>
-          <ul className="mt-3 divide-y divide-[#E5E7EB]">
-            {recentUsage.map((u, i) => (
-              <li key={`${u.label}-${i}`} className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-[#111827]">{u.label}</p>
-                  <p className="text-xs text-[#6B7280]">{u.at}</p>
-                </div>
-                <span className="text-sm font-semibold text-[#6366F1]">-{u.cost}</span>
-              </li>
-            ))}
-          </ul>
+          <h4 className="text-sm font-semibold text-[#111827]">
+            Consumi recenti
+          </h4>
+
+          <p className="mt-3 text-xs text-[#9CA3AF]">
+            Lo storico dei consumi verrà collegato al backend.
+          </p>
         </div>
       )}
 
@@ -73,8 +118,8 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
 
       {notice && (
         <p className="mt-3 rounded-lg bg-[#F7F8FA] px-4 py-3 text-xs text-[#6B7280]">
-          L&apos;acquisto di crediti non è ancora attivo: il flusso di pagamento verrà collegato
-          insieme al backend.
+          L&apos;acquisto di crediti non è ancora attivo: il flusso di
+          pagamento verrà collegato insieme al backend.
         </p>
       )}
     </div>
