@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   Wallet,
   Users,
@@ -10,18 +13,31 @@ import {
   ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
-import { MOCK_USER, MOCK_CREDITS, MOCK_METRICS, MOCK_ACTIVITY } from '@/lib/mock-data'
 
-const stats: { label: string; value: string; icon: LucideIcon }[] = [
-  { label: 'Crediti disponibili', value: MOCK_CREDITS.balance.toLocaleString('it-IT'), icon: Wallet },
-  { label: 'Lead trovati', value: MOCK_METRICS.leadsFound.toLocaleString('it-IT'), icon: Users },
-  {
-    label: 'Domande dell’audience',
-    value: MOCK_METRICS.audienceQuestions.toLocaleString('it-IT'),
-    icon: MessageCircleQuestion,
-  },
-  { label: 'Idee di contenuto', value: MOCK_METRICS.contentIdeas.toLocaleString('it-IT'), icon: Lightbulb },
-]
+import {
+  getCreditBalance,
+  getCurrentUser,
+  getAccessToken,
+} from '@/lib/auth-client'
+
+import {
+  MOCK_METRICS,
+  MOCK_ACTIVITY,
+} from '@/lib/mock-data'
+
+interface DashboardUser {
+  id: number
+  name?: string
+  email?: string
+  credits?: number
+  plan?: string
+}
+
+interface CreditBalance {
+  user_id: number
+  credits: number
+  plan: string
+}
 
 const features: {
   title: string
@@ -72,18 +88,96 @@ const kindColor: Record<string, string> = {
 }
 
 export default function DashboardOverviewPage() {
+  const [user, setUser] = useState<DashboardUser | null>(null)
+  const [credits, setCredits] = useState<CreditBalance | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadDashboard() {
+      const token = getAccessToken()
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const [currentUser, creditBalance] = await Promise.all([
+          getCurrentUser(),
+          getCreditBalance(),
+        ])
+
+        if (currentUser) {
+          setUser(currentUser)
+        }
+
+        if (creditBalance) {
+          setCredits(creditBalance)
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadDashboard()
+  }, [])
+
+  const firstName =
+    user?.name?.split(' ')[0] ??
+    user?.email?.split('@')[0] ??
+    'utente'
+
+  const creditValue = loading
+    ? '...'
+    : credits?.credits?.toLocaleString('it-IT') ?? '0'
+
+  const stats: {
+    label: string
+    value: string
+    icon: LucideIcon
+  }[] = [
+    {
+      label: 'Crediti disponibili',
+      value: creditValue,
+      icon: Wallet,
+    },
+    {
+      label: 'Lead trovati',
+      value: MOCK_METRICS.leadsFound.toLocaleString('it-IT'),
+      icon: Users,
+    },
+    {
+      label: 'Domande dell’audience',
+      value: MOCK_METRICS.audienceQuestions.toLocaleString('it-IT'),
+      icon: MessageCircleQuestion,
+    },
+    {
+      label: 'Idee di contenuto',
+      value: MOCK_METRICS.contentIdeas.toLocaleString('it-IT'),
+      icon: Lightbulb,
+    },
+  ]
+
   return (
     <div className="space-y-8">
       {/* Welcome */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#111827] sm:text-3xl">
-            Bentornato, {MOCK_USER.name.split(' ')[0]} 👋
+            Bentornato, {firstName} 👋
           </h1>
+
           <p className="mt-2 text-[15px] text-[#6B7280]">
             Ecco il riepilogo della tua attività su Social AI Pro.
           </p>
+
+          {credits && (
+            <p className="mt-1 text-xs text-[#9CA3AF]">
+              Piano: {credits.plan}
+            </p>
+          )}
         </div>
+
         <div className="flex flex-wrap gap-3">
           <Link
             href="/dashboard/ai-research"
@@ -92,6 +186,7 @@ export default function DashboardOverviewPage() {
             Start Research
             <ArrowRight className="h-4 w-4" />
           </Link>
+
           <Link
             href="/dashboard/brand-intelligence"
             className="inline-flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-5 py-2.5 text-sm font-semibold text-[#111827] transition-colors hover:bg-[#F7F8FA]"
@@ -104,57 +199,92 @@ export default function DashboardOverviewPage() {
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="rounded-2xl border border-[#E5E7EB] bg-white p-5">
+          <div
+            key={label}
+            className="rounded-2xl border border-[#E5E7EB] bg-white p-5"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#EEF2FF]">
               <Icon className="h-5 w-5 text-[#6366F1]" />
             </div>
-            <p className="mt-4 text-2xl font-bold text-[#111827]">{value}</p>
-            <p className="mt-1 text-sm text-[#6B7280]">{label}</p>
+
+            <p className="mt-4 text-2xl font-bold text-[#111827]">
+              {value}
+            </p>
+
+            <p className="mt-1 text-sm text-[#6B7280]">
+              {label}
+            </p>
           </div>
         ))}
       </div>
 
       {/* Feature cards */}
       <div className="grid gap-4 lg:grid-cols-2">
-        {features.map(({ title, description, href, cta, icon: Icon }) => (
-          <div
-            key={title}
-            className="flex flex-col rounded-2xl border border-[#E5E7EB] bg-white p-6 transition-shadow hover:shadow-lg"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-[#6366F1] to-[#8B5CF6]">
-              <Icon className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-[#111827]">{title}</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-[#6B7280]">{description}</p>
-            <Link
-              href={href}
-              className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#6366F1] hover:gap-3 transition-all"
+        {features.map(
+          ({ title, description, href, cta, icon: Icon }) => (
+            <div
+              key={title}
+              className="flex flex-col rounded-2xl border border-[#E5E7EB] bg-white p-6 transition-shadow hover:shadow-lg"
             >
-              {cta}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ))}
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-[#6366F1] to-[#8B5CF6]">
+                <Icon className="h-5 w-5 text-white" />
+              </div>
+
+              <h3 className="mt-4 text-lg font-semibold text-[#111827]">
+                {title}
+              </h3>
+
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-[#6B7280]">
+                {description}
+              </p>
+
+              <Link
+                href={href}
+                className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#6366F1] transition-all hover:gap-3"
+              >
+                {cta}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ),
+        )}
       </div>
 
       {/* Recent activity */}
       <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
-        <h2 className="text-lg font-semibold text-[#111827]">Attività recente</h2>
+        <h2 className="text-lg font-semibold text-[#111827]">
+          Attività recente
+        </h2>
+
         <ul className="mt-4 divide-y divide-[#E5E7EB]">
           {MOCK_ACTIVITY.map((a) => (
-            <li key={a.id} className="flex items-start justify-between gap-4 py-4">
+            <li
+              key={a.id}
+              className="flex items-start justify-between gap-4 py-4"
+            >
               <div className="flex items-start gap-3">
                 <span
-                  className={`mt-0.5 rounded-md px-2 py-1 text-[11px] font-semibold capitalize ${kindColor[a.kind]}`}
+                  className={`mt-0.5 rounded-md px-2 py-1 text-[11px] font-semibold capitalize ${
+                    kindColor[a.kind]
+                  }`}
                 >
                   {a.kind}
                 </span>
+
                 <div>
-                  <p className="text-sm font-medium text-[#111827]">{a.title}</p>
-                  <p className="text-sm text-[#6B7280]">{a.detail}</p>
+                  <p className="text-sm font-medium text-[#111827]">
+                    {a.title}
+                  </p>
+
+                  <p className="text-sm text-[#6B7280]">
+                    {a.detail}
+                  </p>
                 </div>
               </div>
-              <span className="shrink-0 text-xs text-[#9CA3AF]">{a.at}</span>
+
+              <span className="shrink-0 text-xs text-[#9CA3AF]">
+                {a.at}
+              </span>
             </li>
           ))}
         </ul>
