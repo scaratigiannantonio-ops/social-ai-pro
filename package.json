@@ -1,6 +1,7 @@
 {
   "name": "app",
   "private": true,
+  "packageManager": "npm@11.5.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
