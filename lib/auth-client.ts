@@ -1,5 +1,5 @@
 /* =========================================================================
- * AUTH CLIENT
+ * SOCIAL AI PRO - AUTH CLIENT
  * ========================================================================= */
 
 export interface RegisterPayload {
@@ -11,15 +11,27 @@ export interface RegisterPayload {
 export interface LoginPayload {
   email: string
   password: string
-  remember: boolean
+  remember?: boolean
 }
 
 export interface AuthUser {
   id: number
-  name: string
-  email: string
+  name?: string
+  email?: string
   credits?: number
   plan?: string
+}
+
+export interface CreditBalance {
+  user_id: number
+  credits: number
+  plan: string
+}
+
+export interface GenerateContentResponse {
+  content: string
+  credits_used: number
+  remaining_credits: number
 }
 
 export type AuthResult =
@@ -28,37 +40,67 @@ export type AuthResult =
       access_token?: string
       user?: AuthUser
     }
-  | { status: 'not-configured' }
-  | { status: 'error'; message: string }
+  | {
+      status: 'not-configured'
+    }
+  | {
+      status: 'error'
+      message: string
+    }
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? ''
 
-export const isBackendConfigured = () => API_BASE.length > 0
-
 const TOKEN_KEY = 'social_ai_pro_access_token'
 
+export const isBackendConfigured = (): boolean => {
+  return API_BASE.length > 0
+}
+
+/* =========================================================================
+ * TOKEN
+ * ========================================================================= */
+
 export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null
+  if (typeof window === 'undefined') {
+    return null
+  }
+
   return localStorage.getItem(TOKEN_KEY)
 }
 
 export function saveAccessToken(token: string): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') {
+    return
+  }
+
   localStorage.setItem(TOKEN_KEY, token)
 }
 
 export function removeAccessToken(): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') {
+    return
+  }
+
   localStorage.removeItem(TOKEN_KEY)
 }
+
+export function isAuthenticated(): boolean {
+  return getAccessToken() !== null
+}
+
+/* =========================================================================
+ * GENERIC POST
+ * ========================================================================= */
 
 async function post(
   path: string,
   body: unknown,
 ): Promise<AuthResult> {
   if (!isBackendConfigured()) {
-    return { status: 'not-configured' }
+    return {
+      status: 'not-configured',
+    }
   }
 
   try {
@@ -66,6 +108,7 @@ async function post(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify(body),
     })
@@ -100,10 +143,140 @@ async function post(
   }
 }
 
-export const registerUser = (
-  payload: RegisterPayload,
-) => post('/auth/register', payload)
+/* =========================================================================
+ * REGISTER
+ * ========================================================================= */
 
-export const loginUser = (
+export function registerUser(
+  payload: RegisterPayload,
+): Promise<AuthResult> {
+  return post('/auth/register', payload)
+}
+
+/* =========================================================================
+ * LOGIN
+ * ========================================================================= */
+
+export function loginUser(
   payload: LoginPayload,
-) => post('/auth/login', payload)
+): Promise<AuthResult> {
+  return post('/auth/login', {
+    email: payload.email,
+    password: payload.password,
+  })
+}
+
+/* =========================================================================
+ * AUTHENTICATED REQUEST
+ * ========================================================================= */
+
+async function authenticatedFetch(
+  path: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  const token = getAccessToken()
+
+  const headers = new Headers(options.headers)
+
+  headers.set('Accept', 'application/json')
+
+  if (options.body) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  return fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+  })
+}
+
+/* =========================================================================
+ * CURRENT USER
+ * ========================================================================= */
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  if (!isBackendConfigured()) {
+    return null
+  }
+
+  try {
+    const res = await authenticatedFetch('/auth/me')
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        removeAccessToken()
+      }
+
+      return null
+    }
+
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+/* =========================================================================
+ * CREDIT BALANCE
+ * ========================================================================= */
+
+export async function getCreditBalance(): Promise<CreditBalance | null> {
+  if (!isBackendConfigured()) {
+    return null
+  }
+
+  try {
+    const res = await authenticatedFetch('/credits/balance')
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403) {
+        removeAccessToken()
+      }
+
+      return null
+    }
+
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+/* =========================================================================
+ * GENERATE CONTENT
+ * ========================================================================= */
+
+export async function generateContent(
+  prompt: string,
+): Promise<GenerateContentResponse> {
+  if (!isBackendConfigured()) {
+    throw new Error('Backend non configurato.')
+  }
+
+  const res = await authenticatedFetch('/content/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      prompt,
+    }),
+  })
+
+  const data = await res.json().catch(() => null)
+
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      removeAccessToken()
+    }
+
+    throw new Error(
+      data?.detail ??
+        data?.message ??
+        `Generazione non riuscita (${res.status}).`,
+    )
+  }
+
+  return data
+}
