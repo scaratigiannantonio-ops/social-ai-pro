@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Wallet, Sparkles } from 'lucide-react'
-import { getCreditBalance } from '@/lib/auth-client'
+
+import {
+  getCreditBalance,
+  getAccessToken,
+} from '@/lib/auth-client'
 
 interface CreditsWidgetProps {
   /** Compact variant used on the Overview page. */
@@ -15,18 +19,27 @@ interface CreditBalance {
   plan: string
 }
 
-export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
-  const [notice, setNotice] = useState(false)
-  const [creditData, setCreditData] = useState<CreditBalance | null>(null)
+export function CreditsWidget({
+  compact = false,
+}: CreditsWidgetProps) {
+  const [credits, setCredits] = useState<CreditBalance | null>(null)
   const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState(false)
 
   useEffect(() => {
     async function loadCredits() {
-      try {
-        const data = await getCreditBalance()
+      const token = getAccessToken()
 
-        if (data) {
-          setCreditData(data)
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const balance = await getCreditBalance()
+
+        if (balance) {
+          setCredits(balance)
         }
       } finally {
         setLoading(false)
@@ -36,13 +49,13 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
     loadCredits()
   }, [])
 
-  const balance = creditData?.credits ?? 0
-
   /*
-   * Il limite mensile rimane temporaneamente quello della UI.
-   * In seguito lo prenderemo dal piano reale dell'utente.
+   * Il piano può essere gestito dal backend.
+   * Per ora manteniamo 6000 come limite visuale del piano corrente.
    */
   const monthlyAllowance = 6000
+
+  const balance = credits?.credits ?? 0
 
   const pct = Math.max(
     0,
@@ -87,23 +100,49 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
         <div
           className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6]"
-          style={{ width: `${pct}%` }}
+          style={{
+            width: `${pct}%`,
+          }}
         />
       </div>
 
       <p className="mt-2 text-xs text-[#6B7280]">
-        {pct}% del pacchetto mensile ancora disponibile
+        {loading
+          ? 'Caricamento saldo...'
+          : `${pct}% del pacchetto mensile ancora disponibile`}
       </p>
 
       {!compact && (
         <div className="mt-6">
           <h4 className="text-sm font-semibold text-[#111827]">
-            Consumi recenti
+            Saldo account
           </h4>
 
-          <p className="mt-3 text-xs text-[#9CA3AF]">
-            Lo storico dei consumi verrà collegato al backend.
-          </p>
+          <div className="mt-3 rounded-lg bg-[#F7F8FA] px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[#6B7280]">
+                Crediti disponibili
+              </span>
+
+              <span className="text-sm font-semibold text-[#6366F1]">
+                {loading
+                  ? '...'
+                  : balance.toLocaleString('it-IT')}
+              </span>
+            </div>
+
+            {credits?.plan && (
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-sm text-[#6B7280]">
+                  Piano
+                </span>
+
+                <span className="text-sm font-semibold text-[#111827]">
+                  {credits.plan}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -118,8 +157,9 @@ export function CreditsWidget({ compact = false }: CreditsWidgetProps) {
 
       {notice && (
         <p className="mt-3 rounded-lg bg-[#F7F8FA] px-4 py-3 text-xs text-[#6B7280]">
-          L&apos;acquisto di crediti non è ancora attivo: il flusso di
-          pagamento verrà collegato insieme al backend.
+          L&apos;acquisto di crediti non è ancora attivo:
+          il flusso di pagamento verrà collegato insieme
+          al backend.
         </p>
       )}
     </div>
