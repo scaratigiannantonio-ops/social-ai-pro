@@ -147,10 +147,8 @@ export default function Hero() {
                 {/* Credits */}
                 <div className="bg-[#F7F8FA] rounded-lg p-3">
                   <CreditCard className="w-4 h-4 text-[#10B981] mb-1" />
-                  <p className="text-[10px] font-semibold text-[#111827]">4,850</p>
-                  <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full w-[72%] bg-[#10B981] rounded-full" />
-                  </div>
+                  <p className="text-[10px] font-semibold text-[#111827]">AI Credits</p>
+                  <p className="text-[8px] text-[#6B7280]">Pay as you use</p>
                 </div>
               </div>
             </div>
