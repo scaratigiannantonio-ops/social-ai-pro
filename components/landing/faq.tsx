@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     q: 'What are AI credits?',
-    a: 'AI credits are the currency you use when Social AI Pro performs AI-powered actions like research, content generation, image creation or video generation. Your monthly plan includes a generous amount of credits, and you only spend them when you actively use AI features.',
+    a: 'AI credits are the currency you use when Social AI Pro performs AI-powered actions like research, content generation, image creation or video generation. Credits are purchased separately from your subscription, and you only spend them when you actively use AI features.',
   },
   {
     q: 'Which social networks are supported?',
