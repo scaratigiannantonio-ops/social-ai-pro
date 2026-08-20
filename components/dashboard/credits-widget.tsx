@@ -18,6 +18,11 @@ interface CreditsWidgetProps {
   compact?: boolean
 }
 
+// Social AI Pro: piano unico €29/mese.
+// Il piano include 6.000 crediti mensili.
+// I crediti aggiuntivi saranno acquistabili separatamente.
+const MONTHLY_CREDIT_ALLOWANCE = 6000
+
 export function CreditsWidget({
   compact = false,
 }: CreditsWidgetProps) {
@@ -48,29 +53,17 @@ export function CreditsWidget({
     loadCredits()
   }, [])
 
-  /*
-   * Il valore mensile viene attualmente determinato dal piano.
-   * In futuro potrà arrivare direttamente dal backend.
-   */
-  const monthlyAllowance =
-    credits?.plan?.toLowerCase() === 'pro'
-      ? 6000
-      : credits?.plan?.toLowerCase() === 'business'
-        ? 10000
-        : 6000
-
   const balance = credits?.credits ?? 0
 
-  const pct =
-    monthlyAllowance > 0
-      ? Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round((balance / monthlyAllowance) * 100),
-          ),
-        )
-      : 0
+  const pct = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        (balance / MONTHLY_CREDIT_ALLOWANCE) * 100,
+      ),
+    ),
+  )
 
   const displayedBalance = loading
     ? '...'
@@ -93,7 +86,7 @@ export function CreditsWidget({
             </h3>
 
             <p className="text-sm text-[#6B7280]">
-              Saldo del ciclo corrente
+              Crediti disponibili
             </p>
           </div>
 
@@ -108,35 +101,37 @@ export function CreditsWidget({
         </span>
 
         <span className="text-sm text-[#6B7280]">
-          / {monthlyAllowance.toLocaleString('it-IT')} crediti
+          / {MONTHLY_CREDIT_ALLOWANCE.toLocaleString('it-IT')} crediti
         </span>
 
       </div>
 
       {/* Progress */}
       <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-
         <div
           className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] transition-all duration-500"
           style={{
             width: `${pct}%`,
           }}
         />
-
       </div>
 
       <p className="mt-2 text-xs text-[#6B7280]">
         {loading
           ? 'Caricamento saldo...'
-          : `${pct}% del pacchetto disponibile`}
+          : `${pct}% dei crediti mensili ancora disponibili`}
       </p>
 
       {/* Plan */}
-      {credits?.plan && (
-        <p className="mt-2 text-xs text-[#9CA3AF]">
-          Piano: {credits.plan}
+      <div className="mt-4 rounded-lg bg-[#F7F8FA] px-4 py-3">
+        <p className="text-xs font-medium text-[#111827]">
+          Social AI Pro
         </p>
-      )}
+
+        <p className="mt-1 text-xs text-[#6B7280]">
+          €29/mese · 6.000 crediti inclusi
+        </p>
+      </div>
 
       {/* Recent usage */}
       {!compact && (
@@ -147,12 +142,11 @@ export function CreditsWidget({
           </h4>
 
           <div className="mt-3 rounded-lg bg-[#F7F8FA] px-4 py-4">
-
             <p className="text-xs leading-relaxed text-[#6B7280]">
-              I consumi verranno mostrati qui quando le operazioni AI
-              saranno collegate al sistema crediti del backend.
+              I consumi verranno mostrati qui quando le
+              operazioni AI saranno collegate al sistema
+              crediti del backend.
             </p>
-
           </div>
 
         </div>
@@ -164,17 +158,14 @@ export function CreditsWidget({
         onClick={() => setNotice(true)}
         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
       >
-
         <Sparkles className="h-4 w-4" />
-
-        Buy Credits
-
+        Acquista crediti
       </button>
 
       {notice && (
         <p className="mt-3 rounded-lg bg-[#F7F8FA] px-4 py-3 text-xs text-[#6B7280]">
-          L&apos;acquisto di crediti non è ancora attivo.
-          Il pagamento verrà collegato al backend.
+          L&apos;acquisto di crediti aggiuntivi sarà disponibile
+          prossimamente.
         </p>
       )}
 
