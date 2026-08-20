@@ -19,9 +19,8 @@ interface CreditsWidgetProps {
 }
 
 // Social AI Pro: piano unico €29/mese.
-// Il piano include 6.000 crediti mensili.
-// I crediti aggiuntivi saranno acquistabili separatamente.
-const MONTHLY_CREDIT_ALLOWANCE = 6000
+// Il piano NON include un pacchetto fisso di crediti: i crediti AI
+// si acquistano separatamente. Il saldo viene sempre letto dal backend.
 
 export function CreditsWidget({
   compact = false,
@@ -53,21 +52,9 @@ export function CreditsWidget({
     loadCredits()
   }, [])
 
-  const balance = credits?.credits ?? 0
-
-  const pct = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        (balance / MONTHLY_CREDIT_ALLOWANCE) * 100,
-      ),
-    ),
-  )
-
   const displayedBalance = loading
     ? '...'
-    : balance.toLocaleString('it-IT')
+    : (credits?.credits ?? 0).toLocaleString('it-IT')
 
   return (
     <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6">
@@ -101,25 +88,15 @@ export function CreditsWidget({
         </span>
 
         <span className="text-sm text-[#6B7280]">
-          / {MONTHLY_CREDIT_ALLOWANCE.toLocaleString('it-IT')} crediti
+          crediti
         </span>
 
-      </div>
-
-      {/* Progress */}
-      <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] transition-all duration-500"
-          style={{
-            width: `${pct}%`,
-          }}
-        />
       </div>
 
       <p className="mt-2 text-xs text-[#6B7280]">
         {loading
           ? 'Caricamento saldo...'
-          : `${pct}% dei crediti mensili ancora disponibili`}
+          : 'Saldo aggiornato dal tuo account.'}
       </p>
 
       {/* Plan */}
@@ -129,7 +106,7 @@ export function CreditsWidget({
         </p>
 
         <p className="mt-1 text-xs text-[#6B7280]">
-          €29/mese · 6.000 crediti inclusi
+          €29/mese · crediti AI acquistabili separatamente
         </p>
       </div>
 
