@@ -20,11 +20,6 @@ import {
   getAccessToken,
 } from '@/lib/auth-client'
 
-import {
-  MOCK_METRICS,
-  MOCK_ACTIVITY,
-} from '@/lib/mock-data'
-
 interface DashboardUser {
   id: number
   name?: string
@@ -80,13 +75,6 @@ const features: {
   },
 ]
 
-const kindColor: Record<string, string> = {
-  research: 'bg-[#EEF2FF] text-[#6366F1]',
-  content: 'bg-[#F3E8FF] text-[#8B5CF6]',
-  brand: 'bg-[#ECFDF5] text-[#10B981]',
-  strategy: 'bg-[#FFF7ED] text-[#F59E0B]',
-}
-
 export default function DashboardOverviewPage() {
   const [user, setUser] = useState<DashboardUser | null>(null)
   const [credits, setCredits] = useState<CreditBalance | null>(null)
@@ -135,6 +123,7 @@ export default function DashboardOverviewPage() {
     label: string
     value: string
     icon: LucideIcon
+    pending?: boolean
   }[] = [
     {
       label: 'Crediti disponibili',
@@ -143,18 +132,21 @@ export default function DashboardOverviewPage() {
     },
     {
       label: 'Lead trovati',
-      value: MOCK_METRICS.leadsFound.toLocaleString('it-IT'),
+      value: '—',
       icon: Users,
+      pending: true,
     },
     {
       label: 'Domande dell’audience',
-      value: MOCK_METRICS.audienceQuestions.toLocaleString('it-IT'),
+      value: '—',
       icon: MessageCircleQuestion,
+      pending: true,
     },
     {
       label: 'Idee di contenuto',
-      value: MOCK_METRICS.contentIdeas.toLocaleString('it-IT'),
+      value: '—',
       icon: Lightbulb,
+      pending: true,
     },
   ]
 
@@ -198,7 +190,7 @@ export default function DashboardOverviewPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon }) => (
+        {stats.map(({ label, value, icon: Icon, pending }) => (
           <div
             key={label}
             className="rounded-2xl border border-[#E5E7EB] bg-white p-5"
@@ -214,6 +206,12 @@ export default function DashboardOverviewPage() {
             <p className="mt-1 text-sm text-[#6B7280]">
               {label}
             </p>
+
+            {pending && (
+              <p className="mt-1 text-xs text-[#9CA3AF]">
+                Non ancora disponibile
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -256,38 +254,15 @@ export default function DashboardOverviewPage() {
           Attività recente
         </h2>
 
-        <ul className="mt-4 divide-y divide-[#E5E7EB]">
-          {MOCK_ACTIVITY.map((a) => (
-            <li
-              key={a.id}
-              className="flex items-start justify-between gap-4 py-4"
-            >
-              <div className="flex items-start gap-3">
-                <span
-                  className={`mt-0.5 rounded-md px-2 py-1 text-[11px] font-semibold capitalize ${
-                    kindColor[a.kind]
-                  }`}
-                >
-                  {a.kind}
-                </span>
-
-                <div>
-                  <p className="text-sm font-medium text-[#111827]">
-                    {a.title}
-                  </p>
-
-                  <p className="text-sm text-[#6B7280]">
-                    {a.detail}
-                  </p>
-                </div>
-              </div>
-
-              <span className="shrink-0 text-xs text-[#9CA3AF]">
-                {a.at}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4 rounded-lg bg-[#F7F8FA] px-4 py-8 text-center">
+          <p className="text-sm text-[#6B7280]">
+            Nessuna attività recente da mostrare.
+          </p>
+          <p className="mt-1 text-xs text-[#9CA3AF]">
+            Le tue operazioni AI compariranno qui quando saranno
+            collegate al backend.
+          </p>
+        </div>
       </div>
     </div>
   )
