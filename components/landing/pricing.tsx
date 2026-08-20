@@ -12,7 +12,7 @@ const features = [
   'AI Agents',
   'Content Calendar',
   'Analytics',
-  'Monthly AI credits',
+  'AI credits available on demand',
   'No setup fees',
 ]
 
