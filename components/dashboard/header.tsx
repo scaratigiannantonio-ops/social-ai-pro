@@ -3,11 +3,35 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, Zap, ChevronDown, User, Settings, LogOut } from 'lucide-react'
-import { MOCK_USER, MOCK_CREDITS } from '@/lib/mock-data'
+
+import {
+  getCurrentUser,
+  getCreditBalance,
+  getAccessToken,
+} from '@/lib/auth-client'
+
+function getInitials(name?: string, email?: string): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/)
+    const initials = parts
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join('')
+    if (initials) return initials
+  }
+  if (email && email.trim()) {
+    return email.trim().charAt(0).toUpperCase()
+  }
+  return '—'
+}
 
 export default function DashboardHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  const [name, setName] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -16,6 +40,34 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick: () => vo
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
   }, [])
+
+  useEffect(() => {
+    async function loadAccount() {
+      const token = getAccessToken()
+      if (!token) return
+
+      const [currentUser, creditBalance] = await Promise.all([
+        getCurrentUser(),
+        getCreditBalance(),
+      ])
+
+      if (currentUser) {
+        setName(currentUser.name ?? null)
+        setEmail(currentUser.email ?? null)
+      }
+
+      if (creditBalance) {
+        setCredits(creditBalance.credits)
+      }
+    }
+
+    loadAccount()
+  }, [])
+
+  const displayName = name ?? email ?? 'Account'
+  const initials = getInitials(name ?? undefined, email ?? undefined)
+  const creditsLabel =
+    credits === null ? '—' : credits.toLocaleString('it-IT')
 
   return (
     <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-lg border-b border-[#E5E7EB]">
@@ -38,7 +90,7 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick: () => vo
           >
             <Zap className="w-4 h-4 text-[#6366F1]" />
             <span className="text-sm font-medium text-[#111827]">
-              {MOCK_CREDITS.balance.toLocaleString('it-IT')}
+              {creditsLabel}
             </span>
             <span className="text-xs text-[#6B7280]">crediti</span>
           </Link>
@@ -52,10 +104,10 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick: () => vo
               className="flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-[#F7F8FA] transition-colors"
             >
               <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-xs font-semibold text-white">
-                {MOCK_USER.initials}
+                {initials}
               </span>
               <span className="hidden sm:block text-sm font-medium text-[#111827]">
-                {MOCK_USER.name}
+                {displayName}
               </span>
               <ChevronDown className="w-4 h-4 text-[#6B7280]" />
             </button>
@@ -66,8 +118,10 @@ export default function DashboardHeader({ onMenuClick }: { onMenuClick: () => vo
                 className="absolute right-0 mt-2 w-56 rounded-xl border border-[#E5E7EB] bg-white shadow-lg py-1.5 animate-fade-in"
               >
                 <div className="px-3.5 py-2 border-b border-[#E5E7EB]">
-                  <p className="text-sm font-medium text-[#111827]">{MOCK_USER.name}</p>
-                  <p className="text-xs text-[#6B7280] truncate">{MOCK_USER.email}</p>
+                  <p className="text-sm font-medium text-[#111827]">{displayName}</p>
+                  {email && (
+                    <p className="text-xs text-[#6B7280] truncate">{email}</p>
+                  )}
                 </div>
                 <Link
                   href="/dashboard/settings"
