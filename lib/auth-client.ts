@@ -1,282 +1,455 @@
-/* =========================================================================
- * SOCIAL AI PRO - AUTH CLIENT
- * ========================================================================= */
+/\* =========================================================================
+
+ \* SOCIAL AI PRO - AUTH CLIENT
+
+ \* ========================================================================= \*/
 
 export interface RegisterPayload {
-  name: string
-  email: string
-  password: string
+
+  name: string
+
+  email: string
+
+  password: string
+
 }
 
 export interface LoginPayload {
-  email: string
-  password: string
-  remember?: boolean
+
+  email: string
+
+  password: string
+
+  remember?: boolean
+
 }
 
 export interface AuthUser {
-  id: number
-  name?: string
-  email?: string
-  credits?: number
-  plan?: string
+
+  id: number
+
+  name?: string
+
+  email?: string
+
+  credits?: number
+
+  plan?: string
+
 }
 
 export interface CreditBalance {
-  user_id: number
-  credits: number
-  plan: string
+
+  user\_id: number
+
+  credits: number
+
+  plan: string
+
 }
 
 export interface GenerateContentResponse {
-  content: string
-  credits_used: number
-  remaining_credits: number
+
+  content: string
+
+  credits\_used: number
+
+  remaining\_credits: number
+
 }
 
 export type AuthResult =
-  | {
-      status: 'success'
-      access_token?: string
-      user?: AuthUser
-    }
-  | {
-      status: 'not-configured'
-    }
-  | {
-      status: 'error'
-      message: string
-    }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? ''
+  | {
 
-const TOKEN_KEY = 'social_ai_pro_access_token'
+      status: 'success'
+
+      access\_token?: string
+
+      user?: AuthUser
+
+    }
+
+  | {
+
+      status: 'not-configured'
+
+    }
+
+  | {
+
+      status: 'error'
+
+      message: string
+
+    }
+
+const API\_BASE =
+
+  process.env.NEXT\_PUBLIC\_API\_BASE\_URL?.replace(/**\\/**$/, '') ?? ''
+
+const TOKEN\_KEY = 'social\_ai\_pro\_access\_token'
 
 export const isBackendConfigured = (): boolean => {
-  return API_BASE.length > 0
+
+  return API\_BASE.length > 0
+
 }
 
-/* =========================================================================
- * TOKEN
- * ========================================================================= */
+/\* =========================================================================
+
+ \* TOKEN
+
+ \* ========================================================================= \*/
 
 export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
 
-  return localStorage.getItem(TOKEN_KEY)
+  if (typeof window === 'undefined') {
+
+    return null
+
+  }
+
+  return localStorage.getItem(TOKEN\_KEY)
+
 }
 
 export function saveAccessToken(token: string): void {
-  if (typeof window === 'undefined') {
-    return
-  }
 
-  localStorage.setItem(TOKEN_KEY, token)
+  if (typeof window === 'undefined') {
+
+    return
+
+  }
+
+  localStorage.setItem(TOKEN\_KEY, token)
+
 }
 
 export function removeAccessToken(): void {
-  if (typeof window === 'undefined') {
-    return
-  }
 
-  localStorage.removeItem(TOKEN_KEY)
+  if (typeof window === 'undefined') {
+
+    return
+
+  }
+
+  localStorage.removeItem(TOKEN\_KEY)
+
 }
 
 export function isAuthenticated(): boolean {
-  return getAccessToken() !== null
+
+  return getAccessToken() !== null
+
 }
 
-/* =========================================================================
- * GENERIC POST
- * ========================================================================= */
+/\* =========================================================================
+
+ \* GENERIC POST
+
+ \* ========================================================================= \*/
 
 async function post(
-  path: string,
-  body: unknown,
-): Promise<AuthResult> {
-  if (!isBackendConfigured()) {
-    return {
-      status: 'not-configured',
-    }
-  }
 
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
+  path: string,
 
-    const data = await res.json().catch(() => null)
+  body: unknown,
 
-    if (!res.ok) {
-      return {
-        status: 'error',
-        message:
-          data?.detail ??
-          data?.message ??
-          `Richiesta non riuscita (${res.status}).`,
-      }
-    }
+): Promise\<AuthResult> {
 
-    if (data?.access_token) {
-      saveAccessToken(data.access_token)
-    }
+  if (!isBackendConfigured()) {
 
-    return {
-      status: 'success',
-      access_token: data?.access_token,
-      user: data?.user,
-    }
-  } catch {
-    return {
-      status: 'error',
-      message:
-        'Impossibile contattare il server. Riprova tra qualche istante.',
-    }
-  }
+    return {
+
+      status: 'not-configured',
+
+    }
+
+  }
+
+  try {
+
+    const res = await fetch(\`${API\_BASE}${path}\`, {
+
+      method: 'POST',
+
+      headers: {
+
+        'Content-Type': 'application/json',
+
+        Accept: 'application/json',
+
+      },
+
+      body: JSON.stringify(body),
+
+    })
+
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok) {
+
+      return {
+
+        status: 'error',
+
+        message:
+
+          data?.detail ??
+
+          data?.message ??
+
+          \`Richiesta non riuscita (${res.status}).\`,
+
+      }
+
+    }
+
+    if (data?.access\_token) {
+
+      saveAccessToken(data.access\_token)
+
+    }
+
+    return {
+
+      status: 'success',
+
+      access\_token: data?.access\_token,
+
+      user: data?.user,
+
+    }
+
+  } catch {
+
+    return {
+
+      status: 'error',
+
+      message:
+
+        'Impossibile contattare il server. Riprova tra qualche istante.',
+
+    }
+
+  }
+
 }
 
-/* =========================================================================
- * REGISTER
- * ========================================================================= */
+/\* =========================================================================
+
+ \* REGISTER
+
+ \* ========================================================================= \*/
 
 export function registerUser(
-  payload: RegisterPayload,
-): Promise<AuthResult> {
-  return post('/auth/register', payload)
+
+  payload: RegisterPayload,
+
+): Promise\<AuthResult> {
+
+  return post('/auth/register', payload)
+
 }
 
-/* =========================================================================
- * LOGIN
- * ========================================================================= */
+/\* =========================================================================
+
+ \* LOGIN
+
+ \* ========================================================================= \*/
 
 export function loginUser(
-  payload: LoginPayload,
-): Promise<AuthResult> {
-  return post('/auth/login', {
-    email: payload.email,
-    password: payload.password,
-  })
+
+  payload: LoginPayload,
+
+): Promise\<AuthResult> {
+
+  return post('/auth/login', {
+
+    email: payload.email,
+
+    password: payload.password,
+
+  })
+
 }
 
-/* =========================================================================
- * AUTHENTICATED REQUEST
- * ========================================================================= */
+/\* =========================================================================
+
+ \* AUTHENTICATED REQUEST
+
+ \* ========================================================================= \*/
 
 async function authenticatedFetch(
-  path: string,
-  options: RequestInit = {},
-): Promise<Response> {
-  const token = getAccessToken()
 
-  const headers = new Headers(options.headers)
+  path: string,
 
-  headers.set('Accept', 'application/json')
+  options: RequestInit = {},
 
-  if (options.body) {
-    headers.set('Content-Type', 'application/json')
-  }
+): Promise\<Response> {
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
+  const token = getAccessToken()
 
-  return fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  })
+  const headers = new Headers(options.headers)
+
+  headers.set('Accept', 'application/json')
+
+  if (options.body) {
+
+    headers.set('Content-Type', 'application/json')
+
+  }
+
+  if (token) {
+
+    headers.set('Authorization', \`Bearer ${token}\`)
+
+  }
+
+  return fetch(\`${API\_BASE}${path}\`, {
+
+    ...options,
+
+    headers,
+
+  })
+
 }
 
-/* =========================================================================
- * CURRENT USER
- * ========================================================================= */
+/\* =========================================================================
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
-  if (!isBackendConfigured()) {
-    return null
-  }
+ \* CURRENT USER
 
-  try {
-    const res = await authenticatedFetch('/auth/me')
+ \* ========================================================================= \*/
 
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        removeAccessToken()
-      }
+export async function getCurrentUser(): Promise\<AuthUser | null> {
 
-      return null
-    }
+  if (!isBackendConfigured()) {
 
-    return await res.json()
-  } catch {
-    return null
-  }
+    return null
+
+  }
+
+  try {
+
+    const res = await authenticatedFetch('/auth/me')
+
+    if (!res.ok) {
+
+      if (res.status === 401 || res.status === 403) {
+
+        removeAccessToken()
+
+      }
+
+      return null
+
+    }
+
+    return await res.json()
+
+  } catch {
+
+    return null
+
+  }
+
 }
 
-/* =========================================================================
- * CREDIT BALANCE
- * ========================================================================= */
+/\* =========================================================================
 
-export async function getCreditBalance(): Promise<CreditBalance | null> {
-  if (!isBackendConfigured()) {
-    return null
-  }
+ \* CREDIT BALANCE
 
-  try {
-    const res = await authenticatedFetch('/credits/balance')
+ \* ========================================================================= \*/
 
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        removeAccessToken()
-      }
+export async function getCreditBalance(): Promise\<CreditBalance | null> {
 
-      return null
-    }
+  if (!isBackendConfigured()) {
 
-    return await res.json()
-  } catch {
-    return null
-  }
+    return null
+
+  }
+
+  try {
+
+    const res = await authenticatedFetch('/credits/balance')
+
+    if (!res.ok) {
+
+      if (res.status === 401 || res.status === 403) {
+
+        removeAccessToken()
+
+      }
+
+      return null
+
+    }
+
+    return await res.json()
+
+  } catch {
+
+    return null
+
+  }
+
 }
 
-/* =========================================================================
- * GENERATE CONTENT
- * ========================================================================= */
+/\* =========================================================================
+
+ \* GENERATE CONTENT
+
+ \* ========================================================================= \*/
 
 export async function generateContent(
-  prompt: string,
-): Promise<GenerateContentResponse> {
-  if (!isBackendConfigured()) {
-    throw new Error('Backend non configurato.')
-  }
 
-  const res = await authenticatedFetch('/content/generate', {
-    method: 'POST',
-    body: JSON.stringify({
-      prompt,
-    }),
-  })
+  prompt: string,
 
-  const data = await res.json().catch(() => null)
+): Promise\<GenerateContentResponse> {
 
-  if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      removeAccessToken()
-    }
+  if (!isBackendConfigured()) {
 
-    throw new Error(
-      data?.detail ??
-        data?.message ??
-        `Generazione non riuscita (${res.status}).`,
-    )
-  }
+    throw new Error('Backend non configurato.')
 
-  return data
+  }
+
+  const res = await authenticatedFetch('/content/generate', {
+
+    method: 'POST',
+
+    body: JSON.stringify({
+
+      prompt,
+
+    }),
+
+  })
+
+  const data = await res.json().catch(() => null)
+
+  if (!res.ok) {
+
+    if (res.status === 401 || res.status === 403) {
+
+      removeAccessToken()
+
+    }
+
+    throw new Error(
+
+      data?.detail ??
+
+        data?.message ??
+
+        \`Generazione non riuscita (${res.status}).\`,
+
+    )
+
+  }
+
+  return data
+
 }
