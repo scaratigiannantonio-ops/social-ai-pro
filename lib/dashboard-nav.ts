@@ -6,6 +6,7 @@ import {
   Target,
   Calendar,
   Wallet,
+  ReceiptText,
   Settings,
   type LucideIcon,
 } from 'lucide-react'
@@ -17,12 +18,49 @@ export interface NavItem {
 }
 
 export const dashboardNav: NavItem[] = [
-  { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Brand Intelligence', href: '/dashboard/brand-intelligence', icon: Brain },
-  { label: 'AI Research', href: '/dashboard/ai-research', icon: Search },
-  { label: 'Audience Questions', href: '/dashboard/audience-questions', icon: MessageCircleQuestion },
-  { label: 'Content Strategy', href: '/dashboard/content-strategy', icon: Target },
-  { label: 'Content Calendar', href: '/dashboard/content-calendar', icon: Calendar },
-  { label: 'Credits', href: '/dashboard/credits', icon: Wallet },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  {
+    label: 'Overview',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+  },
+  {
+    label: 'Brand Intelligence',
+    href: '/dashboard/brand-intelligence',
+    icon: Brain,
+  },
+  {
+    label: 'AI Research',
+    href: '/dashboard/ai-research',
+    icon: Search,
+  },
+  {
+    label: 'Audience Questions',
+    href: '/dashboard/audience-questions',
+    icon: MessageCircleQuestion,
+  },
+  {
+    label: 'Content Strategy',
+    href: '/dashboard/content-strategy',
+    icon: Target,
+  },
+  {
+    label: 'Content Calendar',
+    href: '/dashboard/content-calendar',
+    icon: Calendar,
+  },
+  {
+    label: 'Credits',
+    href: '/dashboard/credits',
+    icon: Wallet,
+  },
+  {
+    label: 'Billing',
+    href: '/dashboard/billing',
+    icon: ReceiptText,
+  },
+  {
+    label: 'Settings',
+    href: '/dashboard/settings',
+    icon: Settings,
+  },
 ]
